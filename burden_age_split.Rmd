@@ -1,0 +1,99 @@
+---
+title: "0-4 vs 5-14 TB Difference"
+output: html_notebook
+---
+
+Aim: Create two data frames containing information about the TB burden estimate, reported cases, absolute difference and percentage difference for children aged 0-4 and 5-14 years.
+
+Loading the data 
+
+```{r}
+data <- read_csv("TBburden.csv")
+head(data)
+colnames(data)
+data1 <- data[ , c("country", "year", "age_group", "sex", "best", "lo", "hi")]
+head(data1)
+data2 <- unite(data1, "range", "lo", "hi", sep = "-")
+```
+Creating a data frame for the 0-4 only.
+
+```{r}
+data3 <- data2[data2$age_group == "0-4", ]
+head(data3)
+```
+Checking that each country has a value for f and m.
+```{r}
+data3$sex <- as.factor(data3$sex)
+str(data3$sex)
+identical(sum(data3$sex == "f"), sum(data3$sex == "m"))
+str(data3$country)
+data3$country <- as.factor(data3$country)
+str(data3$country)
+```
+
+Combining the male and female data into a new column containing total burnde for that age group.
+
+```{r}
+summed_data <- aggregate(x = data3$best, 
+                         by = list(data3$country), 
+                         FUN = sum)
+colnames(summed_data)[colnames(summed_data) == "x"] <- "0-4"
+colnames(summed_data)[colnames(summed_data) == "Group.1"] <- "Country" 
+head(summed_data)
+burden_04 <- summed_data
+```
+
+Creating data frame for 5-14 only.
+```{r}
+data_514 <- data2[data2$age_group == "5-14", ]
+head(data_514)
+```
+Checking that each country has a value for m and f 
+
+```{r}
+data_514$sex <- as.factor(data_514$sex)
+str(data_514$sex)
+identical(sum(data_514$sex == "f"), sum(data_514$sex == "m"))
+```
+
+Creating new table with total case burden for 5-14 years for each country.
+
+```{r}
+summed_data514 <- aggregate(x = data_514$best, 
+                         by = list(data_514$country), 
+                         FUN = sum)
+head(summed_data514)
+
+colnames(summed_data514)[colnames(summed_data514) == "Group.1"] <- "Country"
+colnames(summed_data514)[colnames(summed_data514) == "x"] <- "5-14"
+
+burden_514 <- summed_data514
+
+```
+
+Checking that countries match.
+
+```{r}
+typeof(burden_514$Country)
+typeof(burden_04$Country)
+
+burden_04$Country <- as.character(burden_04$Country)
+
+identical(burden_514$Country, burden_04$Country)
+```
+
+Creating final data frame with both sets of data.
+
+```{r}
+burden_agesplit <- cbind(burden_04, burden_514$`5-14`)
+colnames(burden_agesplit)[colnames(burden_agesplit) == "burden_514$`5-14`"] <- "5-14"
+head(burden_agesplit)
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
