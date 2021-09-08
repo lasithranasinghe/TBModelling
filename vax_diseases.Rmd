@@ -1,0 +1,129 @@
+---
+title: "Vaccine-Preventable Diseases"
+output: html_notebook
+---
+
+AIM: Create a data frame and a visualisation looking at whether there is a correlation between 
+rates of vaccine-preventable diseases and difference in TB burden/notifications 
+
+Extracting the data from multiple csv files 
+```{r}
+extract.data <- function(filename){
+        x <- read_csv(filename, skip = 1)
+        return(x) }
+
+diphtheria <- extract.data("Diphtheria.csv")
+measles <- extract.data("Measles.csv")
+mumps <- extract.data("Mumps.csv")
+pertussis <- extract.data("Pertussis.csv")
+polio <- extract.data("Polio.csv")
+rubella <- extract.data("Rubella.csv")
+tetanus <- extract.data("Tetanus.csv")
+
+```
+
+Isolating data for 2019 only
+
+```{r}
+data_2019 <- function(disease) {
+        y <- disease %>% select("Country", "2019")
+        return(y) }
+
+diphtheria_2019 <- data_2019(diphtheria)
+measles_2019 <- data_2019(measles)
+mumps_2019 <- data_2019(mumps)
+pertussis_2019 <- data_2019(pertussis)
+polio_2019 <- data_2019(polio)
+rubella_2019 <- data_2019(rubella)
+tetanus_2019 <- data_2019(tetanus)
+
+diseases <- c(diphtheria_2019, measles_2019, mumps_2019, pertussis_2019, 
+              polio_2019, rubella_2019, tetanus_2019)
+```
+
+Testing columns dimensions and to see which columns are identical 
+
+```{r}
+dim(diphtheria_2019)
+dim(measles_2019)
+dim(mumps_2019)
+dim(pertussis_2019)
+dim(polio_2019)
+dim(rubella_2019)
+dim(tetanus_2019)
+
+all.equal(diphtheria_2019$Country, measles_2019$Country, pertussis_2019$Country, rubella_2019$Country, tetanus_2019$Country)
+```
+
+Mumps has the fewest data so the data for countries that match the mumps set will need to be extracted from the other sets. 
+
+```{r}
+match.mumps <- function(disease, mumps_2019) {
+        z <- disease[match(mumps$Country, disease$Country), ]
+        return(z)}
+
+diph_matched <- match.mumps(diphtheria_2019, mumps_2019)
+meas_matched <- match.mumps(measles_2019, mumps_2019)
+pert_matched <- match.mumps(pertussis_2019, mumps_2019)
+polio_matched <- match.mumps(polio_2019, mumps_2019)
+rubella_matched <- match.mumps(rubella_2019, mumps_2019)
+tet_matched <- match.mumps(tetanus_2019, mumps_2019)
+
+all.equal(diph_matched$Country, meas_matched$Country, pert_matched$Country, polio_matched$Country, rubella_matched$Country, tet_matched$Country, mumps_2019$Country)
+
+```
+
+Combining into a single data frame.
+
+```{r}
+bound_vax <- cbind(mumps_2019, diph_matched$`2019`, meas_matched$`2019`, pert_matched$`2019`, 
+                   polio_matched$`2019`, rubella_matched$`2019`, tet_matched$`2019`)
+
+colnames(bound_vax) <- c("Country", "Mumps", "Diphtheria", "Measles", 
+                                              "Pertussis", "Polio", "Rubella", "Tetanus")
+
+complete_vax <- bound_vax[complete.cases(bound_vax), ]
+```
+
+Importing the TB burden/notification difference data. 
+
+```{r}
+tb.data <- percent_rep
+match_tb <- match(complete_vax$Country, tb.data$Country)
+tb.filter <- tb.data[match_tb, ]
+tb.filter.nona <- na.omit(tb.filter)
+vax.filter.nona <- complete_vax[match(tb.filter.nona$Country, complete_vax$Country), ]
+identical(tb.filter.nona$Country, vax.filter.nona$Country)
+
+```
+
+Putting data frames together 
+
+```{r}
+vax_tb <- cbind(tb.filter.nona, vax.filter.nona[ , 2:8])
+total_vax <- mutate(vax_tb, Total = Mumps + Diphtheria + Measles + Pertussis + Polio + Rubella + Tetanus)
+```
+
+First plot 
+
+```{r}
+plot(x = total_vax$Total, y = total_vax$`Percent Reported`)
+```
+
+Removing burden < 100 cases 
+
+```{r}
+filter.vax <- filter(total_vax, Estimated > 100, Total < 30000)
+plot(x = filter.vax$Total, y = filter.vax$`Percent Reported`, main = "Vax Preventable Disease vs Percentage Reported TB",xlab = "Vax_Total", ylab = "Percent_Reported_TB")
+abline(lm(`Percent Reported` ~ Total, data = filter.vax), col = "red")
+
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+

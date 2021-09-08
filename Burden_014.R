@@ -56,6 +56,3 @@ Europe_Only <- filter(by_continent, Continent == "Europe") %>% arrange(-Differen
 Americas_Only <- filter(by_continent, Continent == "Americas") %>% arrange(-Difference)
 Oceania_Only <- filter(by_continent, Continent == "Oceania") %>% arrange(-Difference)
 final_continent <- rbind(Africa_Only, Asia_Only, Europe_Only, Americas_Only, Oceania_Only)
-
-
-

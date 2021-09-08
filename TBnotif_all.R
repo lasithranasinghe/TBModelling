@@ -12,3 +12,11 @@ TBtotal014 <- completeTB %>% mutate("total_014"=newrel_m014 + newrel_f014) #putt
 all_sexes <- select(TBtotal014, "country", "total_014")
 colnames(all_sexes)[colnames(all_sexes) == "country"] <- "Country"
 colnames(all_sexes)[colnames(all_sexes) == "total_014"] <- "Reported"
+
+
+##data with ISO included
+TB_ISO <- TBnot1[, c("country", "iso3", "year", "newrel_m014", "newrel_f014")]
+ISO_2019 <- TB_ISO[TB_ISO$year == 2019, ]
+ISO_nona <- na.omit(ISO_2019)
+ISO_combined <- mutate(ISO_nona, "Cases" = newrel_m014 + newrel_f014)
+ISO_final <- ISO_combined[, c("country", "iso3", "Cases")]

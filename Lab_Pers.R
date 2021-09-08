@@ -51,6 +51,8 @@ colnames(bound_lab)[colnames(bound_lab) == "Percent Reported" ] <- "Perc_Reporte
 #Plotting the data 
 plot <- ggplot(bound_lab, aes(x = Technicians, y = Perc_Reported)) + geom_point()
 
+plot2 <- ggplot(bound_lab, aes(x = Technicians, y = Difference)) + geom_point()
+
 bound_lab
 
 plot(bound_lab$Difference, bound_lab$Technicians)

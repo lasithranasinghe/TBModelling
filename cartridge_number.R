@@ -1,4 +1,5 @@
 #Load the data for Xpert Cartridges 
+setwd("~/Desktop/AFP/Original Data/Variables Data")
 data <- read_csv("Xpert_Catridge.csv", skip = 2)
 
 #Isolating the relevant data 
@@ -38,10 +39,10 @@ colnames(cart_diff_final)[colnames(cart_diff_final) == "Percent Reported"] <- "P
 colnames(cart_diff_final)[colnames(cart_diff_final) == "cartridge_nona$`Cartridges Procured...2`"] <- "Cartridges"
 colnames(cart_diff_final)
 
-
 ##Plot for cartridges against percentage reported 
-J <- ggplot(data = cart_diff_final, aes(x = Percent_Reported, y = Cartridges)) + geom_point() + geom_line()
+J <- ggplot(data = cart_diff_final, aes(x = Cartridges, y = Percent_Reported)) + geom_point()
 
 #Plot for cartridges against percentage reported 
-K <- ggplot(data = cart_diff_final, aes(x = Difference, y = Cartridges)) + geom_point()
+K <- ggplot(data = cart_diff_final, aes(x = Cartridges, y = Difference)) + geom_point() + geom_smooth()
+
 

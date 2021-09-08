@@ -1,5 +1,4 @@
 #Loading the data set 
-getwd()
 setwd("/Users/Lasith/Desktop/AFP/Original Data/Variables Data")
 data <- read_csv("Physicians_1000.csv", skip = 3)  #Ignoring the first 3 lines 
 
@@ -20,7 +19,7 @@ matching <- match(nona_2018$`Country Name`, difference_$Country) #finding variab
 nona_matching <- na.omit(matching) #removing na values (ones that didn't match)
 vect_matching <- as.vector(nona_matching) 
 subset_difference <- difference_[c(vect_matching), ] #creating difference table of only the necessary data
-match2 <- match(subset$Country, nona_2018$`Country Name`)
+match2 <- match(subset_difference$Country, nona_2018$`Country Name`)
 subset_doctor <- nona_2018[ match2, ] #isolating only countries that are matching 
 
 #Renaming columns to match
@@ -32,6 +31,12 @@ combined_diff_doct <- cbind(subset_difference, subset_doctor$`Physicians per 100
 alphabet_data <- arrange(combined_diff_doct, Country)
 colnames(alphabet_data)
 colnames(alphabet_data)[colnames(alphabet_data) ==
-                                "subset_doctor$`Physicians per 1000`"] <- "Physicians per 1000"
+                                "subset_doctor$`Physicians per 1000`"] <- "Physicians_1000"
+colnames(alphabet_data)[colnames(alphabet_data) ==
+                                "Percent Reported"] <- "Percent_Reported"
 
-ggplot(alphabet_data, aes(x = "Difference", y = "Physicians per 1000")) + geom_line()
+#Plotting a graph with regression line
+plot(x = alphabet_data$Physicians_1000, y = alphabet_data$Percent_Reported, xlab = "Physicians_1000", ylab = "Percent_Reported")
+abline(lm(Percent_Reported ~ Physicians_1000, data = alphabet_data), col = "red")
+
+

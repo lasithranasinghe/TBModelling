@@ -1,0 +1,108 @@
+---
+title: "Helminth Infections and TB"
+output: html_notebook
+---
+
+Importing PDF data about helminth infection rates. 
+
+```{r}
+helminth <- read_excel("helminth.xlsx", skip = 3)
+helminth1 <- helminth[ , c(1:4, 6:7)]
+colnames(helminth1) <- c("Country", "Total_IUs", "STH_Prevalence", "Mod_Sev_Prev", "High_Prev_Proportion", "IUs_above_target")
+```
+
+Filtering the case difference data 
+
+```{r}
+setwd("~/Desktop/AFP/Original Data")
+TBburden <- read_csv("TBburden.csv")
+
+#isolating the important data
+firstfilter <- TBburden %>% select(country, iso3, age_group, sex, best, lo, hi)
+
+#focusing on age group 0-14
+secondfilter <- filter(firstfilter, age_group == "0-14") 
+
+#combining the range into one column
+burdensummary <- unite(secondfilter, "range", lo, hi, sep = "-") 
+
+#combining sexes
+allcases <- burdensummary %>% filter(sex == "a") 
+
+#Cutting out columns 
+final_burden <- allcases[, c("country", "iso3", "best")]
+
+#Reported data 
+ISO_final <- ISO_combined[, c("country", "iso3", "Cases")]
+
+#Length of the data sets 
+length(ISO_final$country)
+length(final_burden$country)
+
+#Matching the data 
+matched <- match(ISO_final$country, final_burden$country)
+matched_burden <- final_burden[c(matched), ]
+identical(ISO_final$country, matched_burden$country)
+
+#Combining the data frames 
+combined_burden <- cbind(matched_burden, ISO_final$Cases)
+colnames(combined_burden)[colnames(combined_burden) == "country"] <- "Country"
+colnames(combined_burden)[colnames(combined_burden) == "iso3"] <- "ISO3"
+colnames(combined_burden)[colnames(combined_burden) == "best"] <- "Estimated"
+colnames(combined_burden)[colnames(combined_burden) == "ISO_final$Cases"] <- "Reported"
+
+#Adding the difference columns
+burden_diff <- mutate(combined_burden, "Difference" = combined_burden$Estimated - combined_burden$Reported)
+burden_diff_perc <- mutate(combined_burden, "Perc_Diff" = (combined_burden$Reported/combined_burden$Estimated)*100)
+
+#Remove NaN 
+burden_nona <- na.omit(burden_diff_perc)
+```
+
+Matching up the case difference data with the helminth data
+
+```{r}
+burden_data <- burden_nona 
+helminth_data <- helminth1
+match_hel <- match(helminth1$Country, burden_data$ISO3)
+match_nona <- na.omit(match_hel)
+filter_burden <- burden_data[c(match_nona), ]
+match_hel2 <- match(filter_burden$ISO3, helminth_data$Country)
+filter_hel <- helminth_data[c(match_hel2), ]
+identical(filter_burden$ISO3, filter_hel$Country)
+```
+Combining helminth data with case data
+
+```{r}
+bound_hel <- cbind(filter_burden, filter_hel[, c(2:6)])
+```
+
+Adding a column for absolute difference 
+
+```{r}
+bound_hel2 <- mutate(bound_hel, "Absolute" = Estimated - Reported)
+```
+
+Creating graph of percentage reported TB cases gainst STH prevalence
+
+```{r}
+graph1 <- ggplot(bound_hel2, aes(x = STH_Prevalence, y = Perc_Diff)) + geom_point() + geom_smooth()
+```
+
+Creating graph of percentage reported TB cases against percentage of IUs that are above the target range 
+
+```{r}
+target <- mutate(bound_hel2, "Target_Perc" = (IUs_above_target/Total_IUs)*100)
+graph2 <- ggplot(target, aes(x = Target_Perc, y = Perc_Diff)) + geom_point() + geom_smooth()
+```
+
+
+NEXT STEPS - add the burden data as a column and add difference and proportions as a column. Then make a few graphs. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
